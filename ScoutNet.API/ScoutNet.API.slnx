@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ScoutNet.Application/ScoutNet.Application.csproj" />
+  <Project Path="ScoutNet.Domain/ScoutNet.Domain.csproj" />
+  <Project Path="ScoutNet.Infrastructure/ScoutNet.Infrastructure.csproj" />
+  <Project Path="ScoutNet.WebAPI/ScoutNet.WebAPI.csproj" />
+</Solution>

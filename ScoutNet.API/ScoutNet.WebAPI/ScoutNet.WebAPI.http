@@ -1,0 +1,6 @@
+@ScoutNet.WebAPI_HostAddress = http://localhost:5098
+
+GET {{ScoutNet.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
