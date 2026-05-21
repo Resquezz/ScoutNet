@@ -7,8 +7,8 @@ namespace ScoutNet.Application.Specifications;
 
 public class PlayerFilterSpecification : BaseSpecification<Player>
 {
-    public PlayerFilterSpecification(PlayerFilterDto filter, int leagueId, int seasonYear)
-        : base(BuildCriteria(filter, leagueId, seasonYear))
+    public PlayerFilterSpecification(PlayerFilterDto filter, int leagueId, int seasonYear, int? teamId = null)
+        : base(BuildCriteria(filter, leagueId, seasonYear, teamId))
     {
         AddInclude(player => player.TeamProfile);
         AddInclude(player => player.LeagueProfile);
@@ -20,10 +20,12 @@ public class PlayerFilterSpecification : BaseSpecification<Player>
     private static Expression<Func<Player, bool>> BuildCriteria(
         PlayerFilterDto filter,
         int leagueId,
-        int seasonYear)
+        int seasonYear,
+        int? teamId)
     {
         return player =>
             player.ExternalLeagueId == leagueId &&
+            (!teamId.HasValue || player.ExternalTeamId == teamId.Value) &&
             player.Statistics.Any(statistics =>
                 statistics.SeasonYear == seasonYear &&
                 (!filter.MinAppearances.HasValue ||

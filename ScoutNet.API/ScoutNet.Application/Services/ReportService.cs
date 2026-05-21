@@ -55,6 +55,23 @@ public class ReportService(
         return ToDto(report);
     }
 
+    public async Task DeleteAsync(Guid id, Guid scoutId, CancellationToken cancellationToken = default)
+    {
+        var report = await reportRepository.GetByIdAsync(id, cancellationToken);
+        if (report is null)
+        {
+            throw new KeyNotFoundException($"Report with id '{id}' was not found.");
+        }
+
+        if (report.ScoutId != scoutId)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own reports.");
+        }
+
+        reportRepository.Remove(report);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
     private static ScoutReportDto ToDto(ScoutReport report) => new()
     {
         Id = report.Id,

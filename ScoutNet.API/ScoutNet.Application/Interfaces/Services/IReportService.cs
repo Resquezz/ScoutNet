@@ -10,4 +10,6 @@ public interface IReportService
         CreateReportDto dto,
         Guid scoutId,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(Guid id, Guid scoutId, CancellationToken cancellationToken = default);
 }

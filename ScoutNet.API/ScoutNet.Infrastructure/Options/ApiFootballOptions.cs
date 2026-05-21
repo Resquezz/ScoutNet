@@ -18,7 +18,14 @@ public class ApiFootballOptions
 
     public bool SendApiHostHeader { get; set; } = true;
 
+    public string LeaguesEndpoint { get; set; } = "leagues";
+
+    public string TeamsEndpoint { get; set; } = "teams";
+
     public string PlayersEndpoint { get; set; } = "players";
+
+    /// <summary>Max page number per request (API-Football free plan allows up to 3).</summary>
+    public int MaxPages { get; set; } = 3;
 
     public int RequestTimeoutSeconds { get; set; } = 100;
 }
