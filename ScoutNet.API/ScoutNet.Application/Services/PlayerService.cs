@@ -16,16 +16,20 @@ public class PlayerService(
         PlayerFilterDto filter,
         int season,
         int leagueId,
+        int teamId,
         CancellationToken cancellationToken = default)
     {
-        var hasPlayers = await playerRepository.ExistsForLeagueAndSeasonAsync(
-            leagueId,
+        var hasPlayers = await playerRepository.ExistsForTeamAndSeasonAsync(
+            teamId,
             season,
             cancellationToken);
 
         if (!hasPlayers)
         {
-            await externalService.FetchAndSavePlayersAsync(leagueId, season, cancellationToken);
+            await externalService.FetchAndSavePlayersAsync(
+                teamId,
+                season,
+                cancellationToken: cancellationToken);
         }
 
         var players = await playerRepository.ListBySpecAsync(
@@ -78,7 +82,10 @@ public class PlayerService(
 
     private static PlayerStatistics GetSeasonStatisticsOrThrow(Player player, int seasonYear)
     {
-        var statistics = player.Statistics.FirstOrDefault(s => s.SeasonYear == seasonYear);
+        var statistics = player.Statistics
+            .Where(s => s.SeasonYear == seasonYear)
+            .OrderByDescending(s => s.Appearances ?? s.Lineups ?? 0)
+            .FirstOrDefault();
 
         if (statistics is null)
         {
@@ -108,14 +115,38 @@ public class PlayerService(
     {
         return new PlayerStatisticsDeltaDto
         {
-            MatchesPlayed = second.MatchesPlayed - first.MatchesPlayed,
-            Goals = second.Goals - first.Goals,
-            Assists = second.Assists - first.Assists,
-            ExpectedGoals = second.ExpectedGoals - first.ExpectedGoals,
-            PassAccuracyPercentage = second.PassAccuracyPercentage - first.PassAccuracyPercentage,
-            DribblesSuccessPercentage = second.DribblesSuccessPercentage - first.DribblesSuccessPercentage,
-            InterceptionsPerGame = second.InterceptionsPerGame - first.InterceptionsPerGame,
-            TacklesPerGame = second.TacklesPerGame - first.TacklesPerGame,
+            Appearances = Delta(first.Appearances, second.Appearances),
+            Lineups = Delta(first.Lineups, second.Lineups),
+            Minutes = Delta(first.Minutes, second.Minutes),
+            ShotsTotal = Delta(first.ShotsTotal, second.ShotsTotal),
+            ShotsOn = Delta(first.ShotsOn, second.ShotsOn),
+            GoalsTotal = Delta(first.GoalsTotal, second.GoalsTotal),
+            GoalsConceded = Delta(first.GoalsConceded, second.GoalsConceded),
+            Assists = Delta(first.Assists, second.Assists),
+            Saves = Delta(first.Saves, second.Saves),
+            PassesTotal = Delta(first.PassesTotal, second.PassesTotal),
+            KeyPasses = Delta(first.KeyPasses, second.KeyPasses),
+            PassAccuracy = Delta(first.PassAccuracy, second.PassAccuracy),
+            TacklesTotal = Delta(first.TacklesTotal, second.TacklesTotal),
+            Blocks = Delta(first.Blocks, second.Blocks),
+            Interceptions = Delta(first.Interceptions, second.Interceptions),
+            DuelsTotal = Delta(first.DuelsTotal, second.DuelsTotal),
+            DuelsWon = Delta(first.DuelsWon, second.DuelsWon),
+            DribblesAttempts = Delta(first.DribblesAttempts, second.DribblesAttempts),
+            DribblesSuccess = Delta(first.DribblesSuccess, second.DribblesSuccess),
+            DribblesPast = Delta(first.DribblesPast, second.DribblesPast),
+            FoulsDrawn = Delta(first.FoulsDrawn, second.FoulsDrawn),
+            FoulsCommitted = Delta(first.FoulsCommitted, second.FoulsCommitted),
+            YellowCards = Delta(first.YellowCards, second.YellowCards),
+            RedCards = Delta(first.RedCards, second.RedCards),
+            PenaltyWon = Delta(first.PenaltyWon, second.PenaltyWon),
+            PenaltyCommitted = Delta(first.PenaltyCommitted, second.PenaltyCommitted),
+            PenaltyScored = Delta(first.PenaltyScored, second.PenaltyScored),
+            PenaltyMissed = Delta(first.PenaltyMissed, second.PenaltyMissed),
+            PenaltySaved = Delta(first.PenaltySaved, second.PenaltySaved),
         };
     }
+
+    private static int? Delta(int? first, int? second) =>
+        (second ?? 0) - (first ?? 0);
 }
