@@ -6,6 +6,10 @@ public class Player
 {
     public Guid Id { get; set; }
 
+    public int ExternalId { get; set; }
+
+    public int LeagueId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public int Age { get; set; }
@@ -20,7 +24,7 @@ public class Player
 
     public DateTime ContractUntil { get; set; }
 
-    public PlayerStatistics? Statistics { get; set; }
+    public ICollection<PlayerStatistics> Statistics { get; set; } = [];
 
     public ICollection<Watchlist> Watchlists { get; set; } = [];
 

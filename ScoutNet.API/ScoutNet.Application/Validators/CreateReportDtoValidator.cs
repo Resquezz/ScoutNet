@@ -13,11 +13,16 @@ public class CreateReportDtoValidator : AbstractValidator<CreateReportDto>
         RuleFor(x => x.Potential)
             .InclusiveBetween(1, 10);
 
+        RuleFor(x => x.PlayerId)
+            .GreaterThan(0);
+
         RuleFor(x => x.Pros)
-            .NotEmpty();
+            .NotEmpty()
+            .MinimumLength(10);
 
         RuleFor(x => x.Cons)
-            .NotEmpty();
+            .NotEmpty()
+            .MinimumLength(10);
 
         RuleFor(x => x.Summary)
             .NotEmpty()

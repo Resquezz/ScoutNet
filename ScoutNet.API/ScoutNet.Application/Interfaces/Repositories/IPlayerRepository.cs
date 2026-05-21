@@ -5,6 +5,11 @@ namespace ScoutNet.Application.Interfaces.Repositories;
 
 public interface IPlayerRepository
 {
+    Task<bool> ExistsForLeagueAndSeasonAsync(
+        int leagueId,
+        int seasonYear,
+        CancellationToken cancellationToken = default);
+
     Task<Player?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<Player?> GetBySpecAsync(ISpecification<Player> spec, CancellationToken cancellationToken = default);
