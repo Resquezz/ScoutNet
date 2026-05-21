@@ -1,12 +1,10 @@
-namespace ScoutNet.Domain.Entities;
+namespace ScoutNet.Application.DTOs;
 
-public class PlayerStatistics
+public class PlayerStatisticsDto
 {
     public Guid Id { get; set; }
 
-    public Guid PlayerId { get; set; }
-
-    public int SeasonYear { get; set; }
+    public string Season { get; set; } = string.Empty;
 
     public int MatchesPlayed { get; set; }
 
@@ -23,6 +21,4 @@ public class PlayerStatistics
     public double InterceptionsPerGame { get; set; }
 
     public double TacklesPerGame { get; set; }
-
-    public Player Player { get; set; } = null!;
 }
