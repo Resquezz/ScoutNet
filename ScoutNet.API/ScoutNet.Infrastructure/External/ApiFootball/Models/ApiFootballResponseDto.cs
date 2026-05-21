@@ -8,8 +8,9 @@ public class ApiFootballResponseDto<T>
     [JsonPropertyName("get")]
     public string? Get { get; set; }
 
+    /// <summary>Query parameters echoed by the API (values may be string or number).</summary>
     [JsonPropertyName("parameters")]
-    public Dictionary<string, string>? Parameters { get; set; }
+    public JsonElement Parameters { get; set; }
 
     [JsonPropertyName("errors")]
     public JsonElement Errors { get; set; }

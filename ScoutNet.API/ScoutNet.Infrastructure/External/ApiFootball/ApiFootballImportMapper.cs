@@ -30,12 +30,30 @@ internal static class ApiFootballImportMapper
         Flag = league.Flag,
     };
 
+    public static League MapLeague(ApiFootballLeagueInfoDto league, ApiFootballCountryDto? country) => new()
+    {
+        Id = Guid.NewGuid(),
+        ExternalId = league.Id,
+        Name = league.Name,
+        Country = country?.Name,
+        Logo = league.Logo,
+        Flag = country?.Flag,
+    };
+
     public static void UpdateLeague(League entity, ApiFootballLeagueDto league)
     {
         entity.Name = league.Name;
         entity.Country = league.Country;
         entity.Logo = league.Logo;
         entity.Flag = league.Flag;
+    }
+
+    public static void UpdateLeague(League entity, ApiFootballLeagueInfoDto league, ApiFootballCountryDto? country)
+    {
+        entity.Name = league.Name;
+        entity.Country = country?.Name;
+        entity.Logo = league.Logo;
+        entity.Flag = country?.Flag;
     }
 
     public static Player MapPlayer(
@@ -45,29 +63,51 @@ internal static class ApiFootballImportMapper
         League league,
         int externalTeamId)
     {
-        return new Player
+        var player = new Player
         {
             Id = Guid.NewGuid(),
             ExternalId = item.Player.Id,
-            ExternalTeamId = externalTeamId,
-            ExternalLeagueId = league.ExternalId,
-            TeamProfileId = team.Id,
-            LeagueProfileId = league.Id,
-            Name = item.Player.Name,
-            Firstname = item.Player.Firstname,
-            Lastname = item.Player.Lastname,
-            Age = item.Player.Age,
-            BirthDate = ParseBirthDate(item.Player.Birth?.Date),
-            BirthPlace = item.Player.Birth?.Place,
-            BirthCountry = item.Player.Birth?.Country,
-            Nationality = item.Player.Nationality ?? string.Empty,
-            Height = item.Player.Height,
-            Weight = item.Player.Weight,
-            Injured = item.Player.Injured,
-            PhotoUrl = item.Player.Photo,
-            CurrentClub = primaryStatistics.Team.Name,
-            Position = MapPosition(primaryStatistics.Games.Position),
         };
+
+        ApplyPlayerProfile(player, item, primaryStatistics, team, league, externalTeamId);
+        return player;
+    }
+
+    public static void UpdatePlayer(
+        Player player,
+        ApiFootballPlayerResponseItemDto item,
+        ApiFootballPlayerStatisticsDto primaryStatistics,
+        Team team,
+        League league,
+        int externalTeamId) =>
+        ApplyPlayerProfile(player, item, primaryStatistics, team, league, externalTeamId);
+
+    private static void ApplyPlayerProfile(
+        Player player,
+        ApiFootballPlayerResponseItemDto item,
+        ApiFootballPlayerStatisticsDto primaryStatistics,
+        Team team,
+        League league,
+        int externalTeamId)
+    {
+        player.ExternalTeamId = externalTeamId;
+        player.ExternalLeagueId = league.ExternalId;
+        player.TeamProfileId = team.Id;
+        player.LeagueProfileId = league.Id;
+        player.Name = item.Player.Name;
+        player.Firstname = item.Player.Firstname;
+        player.Lastname = item.Player.Lastname;
+        player.Age = item.Player.Age;
+        player.BirthDate = ParseBirthDate(item.Player.Birth?.Date);
+        player.BirthPlace = item.Player.Birth?.Place;
+        player.BirthCountry = item.Player.Birth?.Country;
+        player.Nationality = item.Player.Nationality ?? string.Empty;
+        player.Height = item.Player.Height;
+        player.Weight = item.Player.Weight;
+        player.Injured = item.Player.Injured;
+        player.PhotoUrl = item.Player.Photo;
+        player.CurrentClub = primaryStatistics.Team.Name;
+        player.Position = MapPosition(primaryStatistics.Games.Position);
     }
 
     public static PlayerStatistics MapStatistics(
@@ -76,50 +116,68 @@ internal static class ApiFootballImportMapper
         Team team,
         League league)
     {
-        return new PlayerStatistics
+        var entity = new PlayerStatistics
         {
             Id = Guid.NewGuid(),
             PlayerId = playerId,
-            TeamId = team.Id,
-            LeagueId = league.Id,
-            SeasonYear = statistics.League.Season,
-            Appearances = statistics.Games.Appearences,
-            Lineups = statistics.Games.Lineups,
-            Minutes = statistics.Games.Minutes,
-            ShirtNumber = statistics.Games.Number,
-            Position = statistics.Games.Position,
-            Rating = ParseRating(statistics.Games.Rating),
-            Captain = statistics.Games.Captain,
-            SubstitutesIn = statistics.Substitutes?.In,
-            SubstitutesOut = statistics.Substitutes?.Out,
-            SubstitutesBench = statistics.Substitutes?.Bench,
-            ShotsTotal = statistics.Shots?.Total,
-            ShotsOn = statistics.Shots?.On,
-            GoalsTotal = statistics.Goals?.Total,
-            GoalsConceded = statistics.Goals?.Conceded,
-            Assists = statistics.Goals?.Assists,
-            Saves = statistics.Goals?.Saves,
-            PassesTotal = statistics.Passes?.Total,
-            KeyPasses = statistics.Passes?.Key,
-            PassAccuracy = statistics.Passes?.Accuracy,
-            TacklesTotal = statistics.Tackles?.Total,
-            Blocks = statistics.Tackles?.Blocks,
-            Interceptions = statistics.Tackles?.Interceptions,
-            DuelsTotal = statistics.Duels?.Total,
-            DuelsWon = statistics.Duels?.Won,
-            DribblesAttempts = statistics.Dribbles?.Attempts,
-            DribblesSuccess = statistics.Dribbles?.Success,
-            DribblesPast = statistics.Dribbles?.Past,
-            FoulsDrawn = statistics.Fouls?.Drawn,
-            FoulsCommitted = statistics.Fouls?.Committed,
-            YellowCards = statistics.Cards?.Yellow,
-            RedCards = statistics.Cards?.Red,
-            PenaltyWon = statistics.Penalty?.Won,
-            PenaltyCommitted = statistics.Penalty?.Commited,
-            PenaltyScored = statistics.Penalty?.Scored,
-            PenaltyMissed = statistics.Penalty?.Missed,
-            PenaltySaved = statistics.Penalty?.Saved,
         };
+
+        ApplyStatistics(entity, statistics, team, league);
+        return entity;
+    }
+
+    public static void UpdateStatistics(
+        PlayerStatistics entity,
+        ApiFootballPlayerStatisticsDto statistics,
+        Team team,
+        League league) =>
+        ApplyStatistics(entity, statistics, team, league);
+
+    private static void ApplyStatistics(
+        PlayerStatistics entity,
+        ApiFootballPlayerStatisticsDto statistics,
+        Team team,
+        League league)
+    {
+        entity.TeamId = team.Id;
+        entity.LeagueId = league.Id;
+        entity.SeasonYear = statistics.League.Season;
+        entity.Appearances = statistics.Games.Appearences;
+        entity.Lineups = statistics.Games.Lineups;
+        entity.Minutes = statistics.Games.Minutes;
+        entity.ShirtNumber = statistics.Games.Number;
+        entity.Position = statistics.Games.Position;
+        entity.Rating = ParseRating(statistics.Games.Rating);
+        entity.Captain = statistics.Games.Captain;
+        entity.SubstitutesIn = statistics.Substitutes?.In;
+        entity.SubstitutesOut = statistics.Substitutes?.Out;
+        entity.SubstitutesBench = statistics.Substitutes?.Bench;
+        entity.ShotsTotal = statistics.Shots?.Total;
+        entity.ShotsOn = statistics.Shots?.On;
+        entity.GoalsTotal = statistics.Goals?.Total;
+        entity.GoalsConceded = statistics.Goals?.Conceded;
+        entity.Assists = statistics.Goals?.Assists;
+        entity.Saves = statistics.Goals?.Saves;
+        entity.PassesTotal = statistics.Passes?.Total;
+        entity.KeyPasses = statistics.Passes?.Key;
+        entity.PassAccuracy = statistics.Passes?.Accuracy;
+        entity.TacklesTotal = statistics.Tackles?.Total;
+        entity.Blocks = statistics.Tackles?.Blocks;
+        entity.Interceptions = statistics.Tackles?.Interceptions;
+        entity.DuelsTotal = statistics.Duels?.Total;
+        entity.DuelsWon = statistics.Duels?.Won;
+        entity.DribblesAttempts = statistics.Dribbles?.Attempts;
+        entity.DribblesSuccess = statistics.Dribbles?.Success;
+        entity.DribblesPast = statistics.Dribbles?.Past;
+        entity.FoulsDrawn = statistics.Fouls?.Drawn;
+        entity.FoulsCommitted = statistics.Fouls?.Committed;
+        entity.YellowCards = statistics.Cards?.Yellow;
+        entity.RedCards = statistics.Cards?.Red;
+        entity.PenaltyWon = statistics.Penalty?.Won;
+        entity.PenaltyCommitted = statistics.Penalty?.Commited;
+        entity.PenaltyScored = statistics.Penalty?.Scored;
+        entity.PenaltyMissed = statistics.Penalty?.Missed;
+        entity.PenaltySaved = statistics.Penalty?.Saved;
     }
 
     private static DateOnly? ParseBirthDate(string? value) =>

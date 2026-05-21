@@ -16,27 +16,38 @@ public class PlayerService(
         PlayerFilterDto filter,
         int season,
         int leagueId,
-        int teamId,
+        int? teamId,
         CancellationToken cancellationToken = default)
     {
-        var hasPlayers = await playerRepository.ExistsForTeamAndSeasonAsync(
-            teamId,
-            season,
-            cancellationToken);
+        var needsSync = teamId.HasValue
+            ? !await playerRepository.ExistsForTeamAndSeasonAsync(teamId.Value, season, cancellationToken)
+            : !await playerRepository.ExistsForLeagueAndSeasonAsync(leagueId, season, cancellationToken);
 
-        if (!hasPlayers)
+        if (needsSync)
         {
-            await externalService.FetchAndSavePlayersAsync(
-                teamId,
+            await externalService.SyncLeagueSeasonAsync(
+                leagueId,
                 season,
+                teamId,
                 cancellationToken: cancellationToken);
         }
 
         var players = await playerRepository.ListBySpecAsync(
-            new PlayerFilterSpecification(filter, leagueId, season),
+            new PlayerFilterSpecification(filter, leagueId, season, teamId),
             cancellationToken);
 
         return players.Select(PlayerMapper.ToDto).ToList();
+    }
+
+    public async Task<PlayerDetailsDto?> GetPlayerDetailsAsync(
+        int externalId,
+        CancellationToken cancellationToken = default)
+    {
+        var player = await playerRepository.GetBySpecAsync(
+            new PlayerByExternalIdWithStatisticsSpecification(externalId),
+            cancellationToken);
+
+        return player is null ? null : PlayerMapper.ToDetailsDto(player);
     }
 
     public async Task<PlayerComparisonDto> ComparePlayersAsync(

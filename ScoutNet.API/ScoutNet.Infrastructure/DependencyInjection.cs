@@ -1,13 +1,10 @@
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ScoutNet.Application.Interfaces;
 using ScoutNet.Application.Interfaces.External;
 using ScoutNet.Application.Interfaces.Repositories;
-using ScoutNet.Application.Interfaces.Services;
-using ScoutNet.Application.Services;
-using ScoutNet.Application.Validators;
 using ScoutNet.Infrastructure.External.ApiFootball;
 using ScoutNet.Infrastructure.Options;
 using ScoutNet.Infrastructure.Persistence;
@@ -26,24 +23,17 @@ public static class DependencyInjection
         services.AddDbContext<ScoutDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddHttpClient(ApiFootballHttpClient.Name, (serviceProvider, client) =>
+        services.AddHttpClient<IFootballExternalService, FootballExternalService>((serviceProvider, client) =>
         {
-            var options = serviceProvider
-                .GetRequiredService<Microsoft.Extensions.Options.IOptions<ApiFootballOptions>>()
-                .Value;
-            ApiFootballHttpClient.ConfigureHttpClient(client, options);
+            var apiFootballOptions = serviceProvider.GetRequiredService<IOptions<ApiFootballOptions>>().Value;
+            ApiFootballHttpClient.ConfigureHttpClient(client, apiFootballOptions);
         });
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IWatchlistRepository, WatchlistRepository>();
-        services.AddScoped<IFootballExternalService, FootballExternalService>();
-
-        services.AddScoped<IPlayerService, PlayerService>();
-        services.AddScoped<IReportService, ReportService>();
-
-        services.AddValidatorsFromAssemblyContaining<CreateReportDtoValidator>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }
