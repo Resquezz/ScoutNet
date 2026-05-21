@@ -10,6 +10,11 @@ public interface IPlayerRepository
         int seasonYear,
         CancellationToken cancellationToken = default);
 
+    Task<bool> ExistsForTeamAndSeasonAsync(
+        int teamId,
+        int seasonYear,
+        CancellationToken cancellationToken = default);
+
     Task<Player?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<Player?> GetBySpecAsync(ISpecification<Player> spec, CancellationToken cancellationToken = default);

@@ -2,5 +2,9 @@ namespace ScoutNet.Application.Interfaces.External;
 
 public interface IFootballExternalService
 {
-    Task FetchAndSavePlayersAsync(int leagueId, int season, CancellationToken cancellationToken = default);
+    Task FetchAndSavePlayersAsync(
+        int teamId,
+        int season,
+        bool forceRefresh = false,
+        CancellationToken cancellationToken = default);
 }

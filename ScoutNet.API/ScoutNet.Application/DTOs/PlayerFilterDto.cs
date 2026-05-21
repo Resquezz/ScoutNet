@@ -14,25 +14,21 @@ public class PlayerFilterDto
 
     public string? Nationality { get; set; }
 
-    public DateTime? ContractUntilFrom { get; set; }
+    public int? MinAppearances { get; set; }
 
-    public DateTime? ContractUntilTo { get; set; }
-
-    public int? MinMatchesPlayed { get; set; }
-
-    public int? MaxMatchesPlayed { get; set; }
+    public int? MaxAppearances { get; set; }
 
     public int? MinGoals { get; set; }
 
     public int? MinAssists { get; set; }
 
-    public double? MinExpectedGoals { get; set; }
+    public int? MinShotsOn { get; set; }
 
-    public double? MinPassAccuracyPercentage { get; set; }
+    public int? MinPassAccuracy { get; set; }
 
-    public double? MinDribblesSuccessPercentage { get; set; }
+    public int? MinDribblesSuccess { get; set; }
 
-    public double? MinInterceptionsPerGame { get; set; }
+    public int? MinInterceptions { get; set; }
 
-    public double? MinTacklesPerGame { get; set; }
+    public int? MinTackles { get; set; }
 }

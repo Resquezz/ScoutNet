@@ -8,15 +8,33 @@ public class PlayerDto
 
     public string Name { get; set; } = string.Empty;
 
-    public int Age { get; set; }
+    public string? Firstname { get; set; }
+
+    public string? Lastname { get; set; }
+
+    public int? Age { get; set; }
+
+    public DateOnly? BirthDate { get; set; }
+
+    public string? BirthPlace { get; set; }
+
+    public string? BirthCountry { get; set; }
 
     public string Nationality { get; set; } = string.Empty;
+
+    public string? Height { get; set; }
+
+    public string? Weight { get; set; }
+
+    public bool Injured { get; set; }
+
+    public string? PhotoUrl { get; set; }
 
     public string CurrentClub { get; set; } = string.Empty;
 
     public PlayerPosition Position { get; set; }
 
-    public string? PhotoUrl { get; set; }
+    public TeamDto Team { get; set; } = new();
 
-    public DateTime ContractUntil { get; set; }
+    public LeagueDto League { get; set; } = new();
 }

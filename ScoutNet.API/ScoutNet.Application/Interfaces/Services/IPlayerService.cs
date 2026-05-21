@@ -8,6 +8,7 @@ public interface IPlayerService
         PlayerFilterDto filter,
         int season,
         int leagueId,
+        int teamId,
         CancellationToken cancellationToken = default);
 
     Task<PlayerComparisonDto> ComparePlayersAsync(

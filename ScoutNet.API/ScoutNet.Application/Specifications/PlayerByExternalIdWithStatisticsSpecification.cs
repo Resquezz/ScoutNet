@@ -8,6 +8,10 @@ public class PlayerByExternalIdWithStatisticsSpecification : BaseSpecification<P
     public PlayerByExternalIdWithStatisticsSpecification(int externalId)
         : base(player => player.ExternalId == externalId)
     {
+        AddInclude(player => player.TeamProfile);
+        AddInclude(player => player.LeagueProfile);
         AddInclude(player => player.Statistics);
+        AddIncludeChain("Statistics.Team");
+        AddIncludeChain("Statistics.League");
     }
 }
