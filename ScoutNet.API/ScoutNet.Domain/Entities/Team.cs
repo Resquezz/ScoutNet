@@ -6,6 +6,10 @@ public class Team
 
     public int ExternalId { get; set; }
 
+    public int ExternalLeagueId { get; set; }
+
+    public string? Country { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public string? Logo { get; set; }

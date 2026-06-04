@@ -27,6 +27,8 @@ public class ScoutDbContext(DbContextOptions<ScoutDbContext> options) : DbContex
         {
             entity.HasKey(team => team.Id);
             entity.HasIndex(team => team.ExternalId).IsUnique();
+            entity.HasIndex(team => team.ExternalLeagueId);
+            entity.Property(team => team.Country).HasMaxLength(100);
             entity.Property(team => team.Name).HasMaxLength(200).IsRequired();
             entity.Property(team => team.Logo).HasMaxLength(500);
         });

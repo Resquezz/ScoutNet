@@ -6,16 +6,20 @@ namespace ScoutNet.Infrastructure.External.ApiFootball;
 
 internal static class ApiFootballImportMapper
 {
-    public static Team MapTeam(ApiFootballTeamDto team) => new()
+    public static Team MapTeam(ApiFootballTeamDto team, int externalLeagueId, string? country) => new()
     {
         Id = Guid.NewGuid(),
         ExternalId = team.Id,
+        ExternalLeagueId = externalLeagueId,
+        Country = country,
         Name = team.Name,
         Logo = team.Logo,
     };
 
-    public static void UpdateTeam(Team entity, ApiFootballTeamDto team)
+    public static void UpdateTeam(Team entity, ApiFootballTeamDto team, int externalLeagueId, string? country)
     {
+        entity.ExternalLeagueId = externalLeagueId;
+        entity.Country = country;
         entity.Name = team.Name;
         entity.Logo = team.Logo;
     }

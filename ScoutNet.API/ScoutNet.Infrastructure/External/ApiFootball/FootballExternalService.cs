@@ -46,9 +46,14 @@ public class FootballExternalService(
             newLeagues,
             cancellationToken);
 
+        var leagueCountry = leagueCache.TryGetValue(leagueId, out var leagueEntity)
+            ? leagueEntity.Country
+            : null;
+
         var leagueTeamIds = await EnsureTeamsFromApiAsync(
             leagueId,
             season,
+            leagueCountry,
             teamCache,
             newTeams,
             cancellationToken);
@@ -143,6 +148,7 @@ public class FootballExternalService(
     private async Task<IReadOnlyList<int>> EnsureTeamsFromApiAsync(
         int leagueId,
         int season,
+        string? leagueCountry,
         Dictionary<int, Team> teamCache,
         List<Team> newTeams,
         CancellationToken cancellationToken)
@@ -159,7 +165,7 @@ public class FootballExternalService(
 
         foreach (var item in items)
         {
-            ResolveTeam(item.Team, teamCache, newTeams);
+            ResolveTeam(item.Team, leagueId, leagueCountry, teamCache, newTeams);
         }
 
         logger.LogInformation(
@@ -195,6 +201,10 @@ public class FootballExternalService(
         var updatedCount = 0;
         var statisticsCount = 0;
 
+        var leagueCountry = leagueCache.TryGetValue(leagueId, out var leagueEntity)
+            ? leagueEntity.Country
+            : null;
+
         foreach (var item in apiItems)
         {
             if (!processedExternalIds.Add(item.Player.Id))
@@ -216,7 +226,7 @@ public class FootballExternalService(
 
             foreach (var statisticsDto in teamStatistics)
             {
-                ResolveTeam(statisticsDto.Team, teamCache, newTeams);
+                ResolveTeam(statisticsDto.Team, leagueId, leagueCountry, teamCache, newTeams);
                 ResolveLeague(statisticsDto.League, leagueCache, newLeagues);
             }
 
@@ -418,16 +428,18 @@ public class FootballExternalService(
 
     private static void ResolveTeam(
         ApiFootballTeamDto teamDto,
+        int externalLeagueId,
+        string? country,
         Dictionary<int, Team> cache,
         List<Team> newTeams)
     {
         if (cache.ContainsKey(teamDto.Id))
         {
-            ApiFootballImportMapper.UpdateTeam(cache[teamDto.Id], teamDto);
+            ApiFootballImportMapper.UpdateTeam(cache[teamDto.Id], teamDto, externalLeagueId, country);
             return;
         }
 
-        var team = ApiFootballImportMapper.MapTeam(teamDto);
+        var team = ApiFootballImportMapper.MapTeam(teamDto, externalLeagueId, country);
         cache[teamDto.Id] = team;
         newTeams.Add(team);
     }
