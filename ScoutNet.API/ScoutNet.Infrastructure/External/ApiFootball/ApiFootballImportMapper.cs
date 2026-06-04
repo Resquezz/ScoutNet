@@ -9,7 +9,7 @@ internal static class ApiFootballImportMapper
     public static Team MapTeam(ApiFootballTeamDto team, int externalLeagueId, string? country) => new()
     {
         Id = Guid.NewGuid(),
-        ExternalId = team.Id!.Value,
+        ExternalId = team.Id,
         ExternalLeagueId = externalLeagueId,
         Country = country,
         Name = team.Name,
@@ -27,7 +27,7 @@ internal static class ApiFootballImportMapper
     public static League MapLeague(ApiFootballLeagueDto league) => new()
     {
         Id = Guid.NewGuid(),
-        ExternalId = league.Id!.Value,
+        ExternalId = league.Id,
         Name = league.Name,
         Country = league.Country,
         Logo = league.Logo,
@@ -145,7 +145,7 @@ internal static class ApiFootballImportMapper
     {
         entity.TeamId = team.Id;
         entity.LeagueId = league.Id;
-        entity.SeasonYear = statistics.League.Season!.Value;
+        entity.SeasonYear = statistics.League.Season;
         entity.Appearances = statistics.Games.Appearences;
         entity.Lineups = statistics.Games.Lineups;
         entity.Minutes = statistics.Games.Minutes;

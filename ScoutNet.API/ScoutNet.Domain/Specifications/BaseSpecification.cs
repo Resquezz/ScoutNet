@@ -8,6 +8,8 @@ public abstract class BaseSpecification<T> : ISpecification<T>
 
     public List<Expression<Func<T, object>>> Includes { get; } = [];
 
+    public List<string> IncludeChains { get; } = [];
+
     public Expression<Func<T, object>>? OrderBy { get; private set; }
 
     public Expression<Func<T, object>>? OrderByDescending { get; private set; }
@@ -30,6 +32,11 @@ public abstract class BaseSpecification<T> : ISpecification<T>
     protected void AddInclude(Expression<Func<T, object>> includeExpression)
     {
         Includes.Add(includeExpression);
+    }
+
+    protected void AddIncludeChain(string includeChain)
+    {
+        IncludeChains.Add(includeChain);
     }
 
     protected void ApplyOrderBy(Expression<Func<T, object>> orderByExpression)
