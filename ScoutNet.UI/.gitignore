@@ -11,6 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+
+# Runtime API config for production (generated in CI or copied from config.json.example)
+public/config.json
 
 # Editor directories and files
 .vscode/*
