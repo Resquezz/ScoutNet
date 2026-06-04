@@ -8,6 +8,12 @@ public class ScoutReportDto
 
     public Guid PlayerId { get; set; }
 
+    public int PlayerExternalId { get; set; }
+
+    public string PlayerName { get; set; } = string.Empty;
+
+    public string ScoutUsername { get; set; } = string.Empty;
+
     public int CurrentForm { get; set; }
 
     public int Potential { get; set; }

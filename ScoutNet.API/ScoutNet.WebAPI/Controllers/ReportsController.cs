@@ -1,25 +1,65 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScoutNet.Application.DTOs;
 using ScoutNet.Application.Interfaces.Services;
+using ScoutNet.WebAPI.Authorization;
 
 namespace ScoutNet.WebAPI.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = AuthorizationPolicies.ScoutOrAdmin)]
 [Route("api/reports")]
-public class ReportsController(IReportService reportService) : ControllerBase
+public class ReportsController(IReportService reportService) : ApiControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ScoutReportDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ScoutReportDto>>> GetReports(
+        [FromQuery] int? playerId,
+        CancellationToken cancellationToken)
+    {
+        var reports = await reportService.GetReportsAsync(
+            GetCurrentUserId(),
+            GetCurrentUserRole(),
+            playerId,
+            cancellationToken);
+
+        return Ok(reports);
+    }
+
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ScoutReportDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ScoutReportDto>> GetReport(Guid id, CancellationToken cancellationToken)
+    {
+        var report = await reportService.GetByIdAsync(
+            id,
+            GetCurrentUserId(),
+            GetCurrentUserRole(),
+            cancellationToken);
+
+        return report is null ? NotFound() : Ok(report);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ScoutReportDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<ScoutReportDto>> CreateReport(
         [FromBody] CreateReportDto request,
         CancellationToken cancellationToken)
     {
-        var scoutId = GetCurrentUserId();
-        var report = await reportService.CreateAsync(request, scoutId, cancellationToken);
-        return CreatedAtAction(nameof(CreateReport), new { id = report.Id }, report);
+        var report = await reportService.CreateAsync(request, GetCurrentUserId(), cancellationToken);
+        return CreatedAtAction(nameof(GetReport), new { id = report.Id }, report);
+    }
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ScoutReportDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ScoutReportDto>> UpdateReport(
+        Guid id,
+        [FromBody] UpdateReportDto request,
+        CancellationToken cancellationToken)
+    {
+        var report = await reportService.UpdateAsync(id, request, GetCurrentUserId(), cancellationToken);
+        return Ok(report);
     }
 
     [HttpDelete("{id:guid}")]
@@ -27,16 +67,7 @@ public class ReportsController(IReportService reportService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReport(Guid id, CancellationToken cancellationToken)
     {
-        var scoutId = GetCurrentUserId();
-        await reportService.DeleteAsync(id, scoutId, cancellationToken);
+        await reportService.DeleteAsync(id, GetCurrentUserId(), GetCurrentUserRole(), cancellationToken);
         return NoContent();
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.FindFirstValue("sub");
-
-        return Guid.Parse(userId!);
     }
 }
