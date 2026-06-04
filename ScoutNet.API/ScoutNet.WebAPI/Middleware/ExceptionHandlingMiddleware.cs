@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace ScoutNet.WebAPI.Middleware;
 
@@ -59,6 +60,14 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized", null),
             KeyNotFoundException => (HttpStatusCode.NotFound, "Not found", null),
             InvalidOperationException => (HttpStatusCode.BadRequest, "Invalid operation", null),
+            DbUpdateConcurrencyException concurrencyException => (
+                HttpStatusCode.Conflict,
+                "Database concurrency conflict",
+                concurrencyException.InnerException?.Message ?? concurrencyException.Message),
+            DbUpdateException dbUpdateException => (
+                HttpStatusCode.BadRequest,
+                "Database update failed",
+                dbUpdateException.InnerException?.Message ?? dbUpdateException.Message),
             _ => (HttpStatusCode.InternalServerError, "Internal server error", null),
         };
 }

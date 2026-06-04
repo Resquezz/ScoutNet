@@ -17,11 +17,13 @@ public class PlayerService(
         int season,
         int leagueId,
         int? teamId,
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
-        var needsSync = teamId.HasValue
-            ? !await playerRepository.ExistsForTeamAndSeasonAsync(teamId.Value, season, cancellationToken)
-            : !await playerRepository.ExistsForLeagueAndSeasonAsync(leagueId, season, cancellationToken);
+        var needsSync = forceRefresh ||
+            (teamId.HasValue
+                ? !await playerRepository.ExistsForTeamAndSeasonAsync(teamId.Value, season, cancellationToken)
+                : !await playerRepository.ExistsForLeagueAndSeasonAsync(leagueId, season, cancellationToken));
 
         if (needsSync)
         {
@@ -29,7 +31,8 @@ public class PlayerService(
                 leagueId,
                 season,
                 teamId,
-                cancellationToken: cancellationToken);
+                forceRefresh,
+                cancellationToken);
         }
 
         var players = await playerRepository.ListBySpecAsync(

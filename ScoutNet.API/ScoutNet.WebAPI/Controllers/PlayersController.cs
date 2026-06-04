@@ -29,7 +29,8 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
         [FromQuery] int? minDribblesSuccess,
         [FromQuery] int? minInterceptions,
         [FromQuery] int? minTackles,
-        CancellationToken cancellationToken)
+        [FromQuery] bool forceRefresh = false,
+        CancellationToken cancellationToken = default)
     {
         var filter = new PlayerFilterDto
         {
@@ -54,6 +55,7 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
             season,
             leagueId,
             teamId,
+            forceRefresh,
             cancellationToken);
 
         return Ok(players);
