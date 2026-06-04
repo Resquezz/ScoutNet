@@ -8,6 +8,8 @@ public interface ISpecification<T>
 
     List<Expression<Func<T, object>>> Includes { get; }
 
+    List<string> IncludeChains { get; }
+
     Expression<Func<T, object>>? OrderBy { get; }
 
     Expression<Func<T, object>>? OrderByDescending { get; }
