@@ -724,3 +724,7 @@ obj/
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudio,visualstudiocode,csharp,aspnetcore
+
+# Local API configuration (secrets — do not commit)
+ScoutNet.API/ScoutNet.WebAPI/appsettings.json
+ScoutNet.API/ScoutNet.WebAPI/appsettings.Development.json

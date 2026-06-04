@@ -4,10 +4,39 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scoutnet-ui</title>
+    <title>ScoutNet</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      window.addEventListener('error', function (event) {
+        var root = document.getElementById('root')
+        if (root) {
+          root.innerHTML =
+            '<div style="min-height:100vh;background:#020617;color:#fecaca;font-family:system-ui;padding:32px">' +
+            '<h1 style="font-size:32px;margin:0 0 12px">ScoutNet frontend error</h1>' +
+            '<pre style="white-space:pre-wrap;background:rgba(0,0,0,.35);padding:16px;border-radius:12px">' +
+            String(event.message || event.error || 'Unknown error') +
+            '</pre></div>'
+        }
+      })
+      window.addEventListener('unhandledrejection', function (event) {
+        var root = document.getElementById('root')
+        if (root) {
+          root.innerHTML =
+            '<div style="min-height:100vh;background:#020617;color:#fde68a;font-family:system-ui;padding:32px">' +
+            '<h1 style="font-size:32px;margin:0 0 12px">ScoutNet request error</h1>' +
+            '<pre style="white-space:pre-wrap;background:rgba(0,0,0,.35);padding:16px;border-radius:12px">' +
+            String((event.reason && event.reason.message) || event.reason || 'Unknown rejection') +
+            '</pre></div>'
+        }
+      })
+    </script>
+    <div id="root">
+      <div style="min-height:100vh;background:#020617;color:#e2e8f0;font-family:system-ui;padding:32px">
+        <h1 style="font-size:32px;margin:0 0 12px">ScoutNet is loading...</h1>
+        <p style="color:#94a3b8;margin:0">If this stays visible, check the browser console for a JavaScript module error.</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
