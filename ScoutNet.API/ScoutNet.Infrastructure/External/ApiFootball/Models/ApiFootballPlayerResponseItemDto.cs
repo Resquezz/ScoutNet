@@ -104,7 +104,7 @@ public class ApiFootballPlayerStatisticsDto
 public class ApiFootballTeamDto
 {
     [JsonPropertyName("id")]
-    public int? Id { get; set; }
+    public int Id { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -116,7 +116,7 @@ public class ApiFootballTeamDto
 public class ApiFootballLeagueDto
 {
     [JsonPropertyName("id")]
-    public int? Id { get; set; }
+    public int Id { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -131,7 +131,7 @@ public class ApiFootballLeagueDto
     public string? Flag { get; set; }
 
     [JsonPropertyName("season")]
-    public int? Season { get; set; }
+    public int Season { get; set; }
 }
 
 public class ApiFootballGamesDto

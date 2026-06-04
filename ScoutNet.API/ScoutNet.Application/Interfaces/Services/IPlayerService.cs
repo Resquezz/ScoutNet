@@ -9,7 +9,7 @@ public interface IPlayerService
         int season,
         int leagueId,
         int? teamId,
-        bool forceSync = false,
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default);
 
     Task<PlayerDetailsDto?> GetPlayerDetailsAsync(int externalId, CancellationToken cancellationToken = default);

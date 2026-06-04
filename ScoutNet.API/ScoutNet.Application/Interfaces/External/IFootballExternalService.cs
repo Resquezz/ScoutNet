@@ -10,6 +10,6 @@ public interface IFootballExternalService
         int leagueId,
         int season,
         int? teamId = null,
-        bool forceSync = false,
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default);
 }

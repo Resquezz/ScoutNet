@@ -17,10 +17,10 @@ public class PlayerService(
         int season,
         int leagueId,
         int? teamId,
-        bool forceSync = false,
+        bool forceRefresh = false,
         CancellationToken cancellationToken = default)
     {
-        var needsSync = forceSync ||
+        var needsSync = forceRefresh ||
             (teamId.HasValue
                 ? !await playerRepository.ExistsForTeamAndSeasonAsync(teamId.Value, season, cancellationToken)
                 : !await playerRepository.ExistsForLeagueAndSeasonAsync(leagueId, season, cancellationToken));
@@ -31,7 +31,7 @@ public class PlayerService(
                 leagueId,
                 season,
                 teamId,
-                forceSync,
+                forceRefresh,
                 cancellationToken);
         }
 

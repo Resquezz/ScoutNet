@@ -1,36 +1,12 @@
-namespace ScoutNet.Domain.Entities;
+namespace ScoutNet.Application.DTOs;
 
-public class PlayerStatistics
+public class PlayerStatisticsDeltaDto
 {
-    public Guid Id { get; set; }
-
-    public Guid PlayerId { get; set; }
-
-    public Guid TeamId { get; set; }
-
-    public Guid LeagueId { get; set; }
-
-    public int SeasonYear { get; set; }
-
     public int? Appearances { get; set; }
 
     public int? Lineups { get; set; }
 
     public int? Minutes { get; set; }
-
-    public int? ShirtNumber { get; set; }
-
-    public string? Position { get; set; }
-
-    public decimal? Rating { get; set; }
-
-    public bool Captain { get; set; }
-
-    public int? SubstitutesIn { get; set; }
-
-    public int? SubstitutesOut { get; set; }
-
-    public int? SubstitutesBench { get; set; }
 
     public int? ShotsTotal { get; set; }
 
@@ -83,10 +59,4 @@ public class PlayerStatistics
     public int? PenaltyMissed { get; set; }
 
     public int? PenaltySaved { get; set; }
-
-    public Player Player { get; set; } = null!;
-
-    public Team Team { get; set; } = null!;
-
-    public League League { get; set; } = null!;
 }
