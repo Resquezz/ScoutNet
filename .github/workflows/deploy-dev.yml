@@ -1,0 +1,52 @@
+name: Deploy Dev (API)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  AZURE_WEBAPP_NAME: scoutnet-api-dev
+  API_PROJECT_PATH: ScoutNet.API/ScoutNet.WebAPI/ScoutNet.WebAPI.csproj
+  INFRASTRUCTURE_PROJECT_PATH: ScoutNet.API/ScoutNet.Infrastructure/ScoutNet.Infrastructure.csproj
+
+jobs:
+  build-test-migrate-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ScoutNet.API/ScoutNet.API.slnx
+
+      - name: Build
+        run: dotnet build ScoutNet.API/ScoutNet.API.slnx --configuration Release --no-restore
+
+      - name: Apply EF Core migrations
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.SCOUTNET_DEV_CONNECTION_STRING }}
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update \
+            --project ${{ env.INFRASTRUCTURE_PROJECT_PATH }} \
+            --startup-project ${{ env.API_PROJECT_PATH }}
+
+      - name: Publish API
+        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --output ./publish
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_SCOUTNET_API_DEV }}
+          package: ./publish
