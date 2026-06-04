@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScoutNet.Application.DTOs;
 using ScoutNet.Application.Interfaces.Services;
 using ScoutNet.Domain.Enums;
+using ScoutNet.WebAPI.Authorization;
 
 namespace ScoutNet.WebAPI.Controllers;
 
@@ -50,6 +52,24 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
             MinTackles = minTackles,
         };
 
+        if (HasAdvancedFilters(filter) && User.Identity?.IsAuthenticated != true)
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized",
+                detail = "Advanced search requires a Scout or Admin account.",
+            });
+        }
+
+        if (HasAdvancedFilters(filter))
+        {
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            if (role is not (AppRoles.Scout or AppRoles.Admin))
+            {
+                return Forbid();
+            }
+        }
+
         var players = await playerService.GetPlayersWithSyncAsync(
             filter,
             season,
@@ -61,6 +81,7 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
         return Ok(players);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(PlayerDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -72,6 +93,7 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
         return player is null ? NotFound() : Ok(player);
     }
 
+    [Authorize(Policy = AuthorizationPolicies.ScoutOrAdmin)]
     [HttpGet("compare")]
     [ProducesResponseType(typeof(PlayerComparisonDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<PlayerComparisonDto>> ComparePlayers(
@@ -83,4 +105,20 @@ public class PlayersController(IPlayerService playerService) : ControllerBase
         var comparison = await playerService.ComparePlayersAsync(id1, id2, season, cancellationToken);
         return Ok(comparison);
     }
+
+    private static bool HasAdvancedFilters(PlayerFilterDto filter) =>
+        !string.IsNullOrWhiteSpace(filter.SearchTerm)
+        || filter.MinAge.HasValue
+        || filter.MaxAge.HasValue
+        || filter.Position.HasValue
+        || !string.IsNullOrWhiteSpace(filter.Nationality)
+        || filter.MinAppearances.HasValue
+        || filter.MaxAppearances.HasValue
+        || filter.MinGoals.HasValue
+        || filter.MinAssists.HasValue
+        || filter.MinShotsOn.HasValue
+        || filter.MinPassAccuracy.HasValue
+        || filter.MinDribblesSuccess.HasValue
+        || filter.MinInterceptions.HasValue
+        || filter.MinTackles.HasValue;
 }
