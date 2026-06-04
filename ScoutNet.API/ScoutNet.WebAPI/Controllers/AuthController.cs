@@ -8,7 +8,7 @@ namespace ScoutNet.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService) : ApiControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register")]
@@ -37,11 +37,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<UserProfileDto>> GetProfile(CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(
-            User.FindFirst("sub")?.Value
-            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-
-        var profile = await authService.GetProfileAsync(userId, cancellationToken);
+        var profile = await authService.GetProfileAsync(GetCurrentUserId(), cancellationToken);
         return Ok(profile);
     }
 }
