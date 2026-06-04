@@ -1,20 +1,10 @@
 using ScoutNet.Domain.Enums;
 
-namespace ScoutNet.Domain.Entities;
+namespace ScoutNet.Application.DTOs;
 
-public class Player
+public class PlayerDetailsDto
 {
-    public Guid Id { get; set; }
-
-    public int ExternalId { get; set; }
-
-    public int ExternalTeamId { get; set; }
-
-    public int ExternalLeagueId { get; set; }
-
-    public Guid TeamProfileId { get; set; }
-
-    public Guid LeagueProfileId { get; set; }
+    public int Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
@@ -44,13 +34,9 @@ public class Player
 
     public PlayerPosition Position { get; set; }
 
-    public Team TeamProfile { get; set; } = null!;
+    public TeamDto Team { get; set; } = new();
 
-    public League LeagueProfile { get; set; } = null!;
+    public LeagueDto League { get; set; } = new();
 
-    public ICollection<PlayerStatistics> Statistics { get; set; } = [];
-
-    public ICollection<Watchlist> Watchlists { get; set; } = [];
-
-    public ICollection<ScoutReport> ScoutReports { get; set; } = [];
+    public IReadOnlyList<PlayerStatisticsDto> Statistics { get; set; } = [];
 }
