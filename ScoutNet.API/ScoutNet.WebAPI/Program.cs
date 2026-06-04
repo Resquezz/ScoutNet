@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using ScoutNet.Application;
 using ScoutNet.Application.Options;
 using ScoutNet.Infrastructure;
+using ScoutNet.WebAPI.Authorization;
 using ScoutNet.WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +44,14 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.ScoutOrAdmin, policy =>
+        policy.RequireRole(AppRoles.Scout, AppRoles.Admin));
+
+    options.AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
+        policy.RequireRole(AppRoles.Admin));
+});
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:4200"];

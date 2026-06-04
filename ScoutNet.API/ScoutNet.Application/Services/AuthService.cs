@@ -19,7 +19,8 @@ public class AuthService(
     IUnitOfWork unitOfWork,
     IOptions<JwtOptions> jwtOptions,
     IValidator<LoginRequestDto> loginValidator,
-    IValidator<RegisterRequestDto> registerValidator) : IAuthService
+    IValidator<RegisterRequestDto> registerValidator,
+    IValidator<UpdateUserRoleDto> updateUserRoleValidator) : IAuthService
 {
     public async Task<AuthResponseDto> RegisterAsync(
         RegisterRequestDto request,
@@ -66,6 +67,53 @@ public class AuthService(
 
         return BuildAuthResponse(user);
     }
+
+    public async Task<UserProfileDto> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+        }
+
+        return ToProfileDto(user);
+    }
+
+    public async Task<IReadOnlyList<UserProfileDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await userRepository.ListAllAsync(cancellationToken);
+        return users.Select(ToProfileDto).ToList();
+    }
+
+    public async Task<UserProfileDto> UpdateUserRoleAsync(
+        Guid userId,
+        UserRole role,
+        CancellationToken cancellationToken = default)
+    {
+        await updateUserRoleValidator.ValidateAndThrowAsync(
+            new UpdateUserRoleDto { Role = role },
+            cancellationToken);
+
+        var user = await userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+        }
+
+        user.Role = role;
+        userRepository.Update(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ToProfileDto(user);
+    }
+
+    private static UserProfileDto ToProfileDto(User user) => new()
+    {
+        UserId = user.Id,
+        Username = user.Username,
+        Email = user.Email,
+        Role = user.Role.ToString(),
+    };
 
     private AuthResponseDto BuildAuthResponse(User user)
     {
