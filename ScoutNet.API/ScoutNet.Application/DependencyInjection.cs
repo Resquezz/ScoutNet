@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IPlayerService, PlayerService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IWatchlistService, WatchlistService>();
 
         services.AddValidatorsFromAssemblyContaining<CreateReportDtoValidator>();
 
