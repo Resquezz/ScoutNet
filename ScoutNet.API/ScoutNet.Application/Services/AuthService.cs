@@ -22,13 +22,17 @@ public class AuthService(
     IValidator<RegisterRequestDto> registerValidator,
     IValidator<UpdateUserRoleDto> updateUserRoleValidator) : IAuthService
 {
+    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+
     public async Task<AuthResponseDto> RegisterAsync(
         RegisterRequestDto request,
         CancellationToken cancellationToken = default)
     {
         await registerValidator.ValidateAndThrowAsync(request, cancellationToken);
 
-        if (await userRepository.GetByEmailAsync(request.Email, cancellationToken) is not null)
+        var normalizedEmail = NormalizeEmail(request.Email);
+
+        if (await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken) is not null)
         {
             throw new InvalidOperationException("A user with this email already exists.");
         }
@@ -42,7 +46,7 @@ public class AuthService(
         {
             Id = Guid.NewGuid(),
             Username = request.Username,
-            Email = request.Email,
+            Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Role = UserRole.Scout,
         };
@@ -59,10 +63,16 @@ public class AuthService(
     {
         await loginValidator.ValidateAndThrowAsync(request, cancellationToken);
 
-        var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var normalizedEmail = NormalizeEmail(request.Email);
+        var user = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+        if (user is null)
         {
-            throw new UnauthorizedAccessException("Invalid email or password.");
+            throw new UnauthorizedAccessException("User with this email does not exist.");
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Invalid password.");
         }
 
         return BuildAuthResponse(user);

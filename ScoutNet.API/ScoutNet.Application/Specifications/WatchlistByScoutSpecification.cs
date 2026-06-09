@@ -11,5 +11,6 @@ public class WatchlistByScoutSpecification : BaseSpecification<Watchlist>
         AddInclude(entry => entry.Player);
         AddIncludeChain("Player.TeamProfile");
         AddIncludeChain("Player.LeagueProfile");
+        AddIncludeChain("Player.Statistics");
     }
 }
