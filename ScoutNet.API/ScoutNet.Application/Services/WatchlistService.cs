@@ -22,10 +22,20 @@ public class WatchlistService(
             cancellationToken);
 
         return entries
-            .Select(entry => new WatchlistItemDto
+            .Select(entry =>
             {
-                PlayerId = entry.Player.ExternalId,
-                Player = PlayerMapper.ToDto(entry.Player),
+                var latestStatistics = entry.Player.Statistics
+                    .OrderByDescending(statistics => statistics.SeasonYear)
+                    .FirstOrDefault();
+
+                return new WatchlistItemDto
+                {
+                    PlayerId = entry.Player.ExternalId,
+                    Player = PlayerMapper.ToDto(entry.Player),
+                    LatestSeasonStatistics = latestStatistics is null
+                        ? null
+                        : PlayerMapper.ToStatisticsDto(latestStatistics),
+                };
             })
             .ToList();
     }

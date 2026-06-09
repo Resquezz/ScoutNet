@@ -11,7 +11,9 @@ public class UserRepository(ScoutDbContext dbContext) : IUserRepository
         dbContext.Users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
 
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default) =>
-        dbContext.Users.FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
+        dbContext.Users.FirstOrDefaultAsync(
+            user => user.Email.ToLower() == email.ToLower(),
+            cancellationToken);
 
     public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default) =>
         dbContext.Users.FirstOrDefaultAsync(user => user.Username == username, cancellationToken);

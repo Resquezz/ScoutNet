@@ -153,6 +153,7 @@ export type ReportForm = {
 export type WatchlistItem = {
   playerId: number
   player: Player
+  latestSeasonStatistics?: PlayerStatistics | null
 }
 
 export type PlayerFilters = {

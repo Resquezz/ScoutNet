@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { scoutNetApi, setAuthToken } from './services/api'
 import type {
   AuthResponse,
@@ -49,6 +49,8 @@ const positions = [
   ['Attacker', 35],
 ] as const
 
+type CompareSlot = { id: number; name: string } | null
+
 function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(() => {
     try {
@@ -65,7 +67,8 @@ function App() {
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetails | null>(null)
   const [selectedPlayerSeason, setSelectedPlayerSeason] = useState<number | null>(null)
   const [isPlayerCardOpen, setIsPlayerCardOpen] = useState(false)
-  const [compareIds, setCompareIds] = useState<[number | '', number | '']>(['', ''])
+  const [compareSlots, setCompareSlots] = useState<[CompareSlot, CompareSlot]>([null, null])
+  const compareReplaceTargetRef = useRef<0 | 1>(0)
   const [comparison, setComparison] = useState<PlayerComparison | null>(null)
   const [reports, setReports] = useState<ScoutReport[]>([])
   const [editingReport, setEditingReport] = useState<ScoutReport | null>(null)
@@ -146,8 +149,10 @@ function App() {
           },
         ])
         setSelectedCountry('England')
-        setFilters((current) => ({ ...current, leagueId: 39, teamId: '' }))
+        const initialFilters = { ...defaultFilters, leagueId: 39, teamId: '' }
+        setFilters(initialFilters)
         await loadTeams(39)
+        await fetchPlayers(initialFilters)
         return
       }
 
@@ -160,8 +165,10 @@ function App() {
         ?? data.find((entry) => entry.country === defaultCountry)?.leagues[0]
 
       if (defaultLeague) {
-        setFilters((current) => ({ ...current, leagueId: defaultLeague.externalId, teamId: '' }))
+        const initialFilters = { ...defaultFilters, leagueId: defaultLeague.externalId, teamId: '' }
+        setFilters(initialFilters)
         await loadTeams(defaultLeague.externalId)
+        await fetchPlayers(initialFilters)
       }
     } catch {
       setCountriesLeagues([
@@ -172,8 +179,10 @@ function App() {
         },
       ])
       setSelectedCountry('England')
-      setFilters((current) => ({ ...current, leagueId: 39, teamId: '' }))
+      const initialFilters = { ...defaultFilters, leagueId: 39, teamId: '' }
+      setFilters(initialFilters)
       setTeamOptions([])
+      await fetchPlayers(initialFilters)
     } finally {
       setLoading(false)
     }
@@ -188,6 +197,32 @@ function App() {
     }
   }
 
+  async function fetchPlayers(activeFilters: PlayerFilters) {
+    if (!activeFilters.leagueId) {
+      return
+    }
+
+    const requestFilters: PlayerFilters = isScout
+      ? activeFilters
+      : {
+          ...activeFilters,
+          searchTerm: '',
+          minAge: '',
+          maxAge: '',
+          position: '',
+          nationality: '',
+          minAppearances: '',
+          minGoals: '',
+          minAssists: '',
+          minPassAccuracy: '',
+          minTackles: '',
+          minInterceptions: '',
+        }
+
+    const data = await scoutNetApi.players(requestFilters)
+    setPlayers(data)
+  }
+
   async function loadPlayers() {
     if (!filters.leagueId) {
       setMessage('Select a country and league first.')
@@ -195,25 +230,7 @@ function App() {
     }
 
     await run(async () => {
-      const requestFilters: PlayerFilters = isScout
-        ? filters
-        : {
-            ...filters,
-            searchTerm: '',
-            minAge: '',
-            maxAge: '',
-            position: '',
-            nationality: '',
-            minAppearances: '',
-            minGoals: '',
-            minAssists: '',
-            minPassAccuracy: '',
-            minTackles: '',
-            minInterceptions: '',
-          }
-
-      const data = await scoutNetApi.players(requestFilters)
-      setPlayers(data)
+      await fetchPlayers(filters)
     })
   }
 
@@ -276,15 +293,50 @@ function App() {
 
   async function comparePlayers() {
     if (!isScout) return
+    const compareIds = compareSlots.map((slot) => slot?.id ?? null)
     if (!compareIds[0] || !compareIds[1]) {
       setMessage('Select two players first.')
       return
     }
 
     await run(async () => {
-      const data = await scoutNetApi.compare(Number(compareIds[0]), Number(compareIds[1]), filters.season)
+      const data = await scoutNetApi.compare(compareIds[0]!, compareIds[1]!, filters.season)
       setComparison(data)
       setActiveTab('comparison')
+    })
+  }
+
+  function clearCompareSlot(index: 0 | 1) {
+    setCompareSlots((current) => {
+      const next: [CompareSlot, CompareSlot] = [...current]
+      next[index] = null
+      return next
+    })
+  }
+
+  function setCompareSlot(player: Player) {
+    setCompareSlots((current) => {
+      if (current[0]?.id === player.id) {
+        return [null, current[1]]
+      }
+      if (current[1]?.id === player.id) {
+        return [current[0], null]
+      }
+
+      const slot = { id: player.id, name: player.name }
+      const next: [CompareSlot, CompareSlot] = [...current]
+
+      if (current[0] === null) {
+        next[0] = slot
+      } else if (current[1] === null) {
+        next[1] = slot
+      } else {
+        const target = compareReplaceTargetRef.current
+        next[target] = slot
+        compareReplaceTargetRef.current = target === 0 ? 1 : 0
+      }
+
+      return next
     })
   }
 
@@ -315,10 +367,6 @@ function App() {
       setReports((current) => current.filter((report) => report.id !== id))
       setMessage('Report deleted.')
     })
-  }
-
-  function setCompareSlot(playerId: number) {
-    setCompareIds(([first, second]) => (first === '' ? [playerId, second] : [first, playerId]))
   }
 
   function openReportFor(player: Player) {
@@ -395,18 +443,25 @@ function App() {
                 {isScout && (
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="text-slate-400">Compare:</span>
-                    <input
-                      className="input w-24 min-w-0"
-                      value={compareIds[0]}
-                      onChange={(event) => setCompareIds([Number(event.target.value) || '', compareIds[1]])}
-                      placeholder="ID 1"
-                    />
-                    <input
-                      className="input w-24 min-w-0"
-                      value={compareIds[1]}
-                      onChange={(event) => setCompareIds([compareIds[0], Number(event.target.value) || ''])}
-                      placeholder="ID 2"
-                    />
+                    {compareSlots.map((slot, index) => (
+                      slot ? (
+                        <span key={index} className="inline-flex max-w-[160px] items-center gap-1 rounded-lg bg-sky-400/10 px-2 py-1 text-sky-100">
+                          <span className="truncate">{slot.name}</span>
+                          <button
+                            type="button"
+                            className="shrink-0 text-slate-400 hover:text-white"
+                            onClick={() => clearCompareSlot(index as 0 | 1)}
+                            aria-label={`Remove ${slot.name}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : (
+                        <span key={index} className="rounded-lg border border-dashed border-white/20 px-2 py-1 text-slate-500">
+                          Player {index + 1}
+                        </span>
+                      )
+                    ))}
                     <button className="btn-primary" onClick={comparePlayers}>
                       Radar
                     </button>
@@ -718,7 +773,7 @@ function PlayerTable({
   players: Player[]
   isScout: boolean
   onSelect: (id: number) => void
-  onCompare: (id: number) => void
+  onCompare: (player: Player) => void
   onWatch: (id: number) => void
   onReport: (player: Player) => void
 }) {
@@ -750,7 +805,7 @@ function PlayerTable({
               {isScout && (
                 <td className="px-2 py-3">
                   <div className="flex flex-wrap gap-1">
-                    <button className="btn-secondary px-2 py-1 text-xs" onClick={() => onCompare(player.id)}>Compare</button>
+                    <button className="btn-secondary px-2 py-1 text-xs" onClick={() => onCompare(player)}>Compare</button>
                     <button className="btn-secondary px-2 py-1 text-xs" onClick={() => onWatch(player.id)}>Watch</button>
                     <button className="btn-secondary px-2 py-1 text-xs" onClick={() => onReport(player)}>Report</button>
                   </div>
@@ -873,6 +928,7 @@ function PlayerCardModal({
 
   const currentStats = player.statistics.find((entry) => entry.seasonYear === selectedSeason) ?? player.statistics[0]
   const profileRows: Array<[string, string | number | null | undefined]> = [
+    ['External ID', player.id],
     ['Player name', player.name],
     ['Firstname', player.firstname],
     ['Lastname', player.lastname],
@@ -937,6 +993,7 @@ function PlayerCardModal({
             <div>
               <h2 className="text-2xl font-bold">{player.name}</h2>
               <p className="text-slate-400">{player.currentClub} · {player.nationality} · {positionLabel(player.position)}</p>
+              <p className="text-xs text-slate-500">External ID: {player.id}</p>
             </div>
           </div>
           <button className="btn-secondary" onClick={onClose}>Close</button>
@@ -1078,7 +1135,7 @@ function ReportsPanel(props: {
   )
 }
 
-function WatchlistPanel({ isScout, items, onRemove, onReport }: {
+function WatchlistPanel({ isScout, items, onRemove, onReport, onOpenPlayer }: {
   isScout: boolean
   items: WatchlistItem[]
   onRemove: (playerId: number) => void
@@ -1091,7 +1148,7 @@ function WatchlistPanel({ isScout, items, onRemove, onReport }: {
 
   return (
     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {items.map(({ player }) => (
+      {items.map(({ player, latestSeasonStatistics: stats }) => (
         <article key={player.id} className="card p-4">
           <div className="flex items-start gap-3">
             <button onClick={() => onOpenPlayer(player.id)} title="Open player card">
@@ -1105,6 +1162,26 @@ function WatchlistPanel({ isScout, items, onRemove, onReport }: {
               <p className="text-sm text-sky-300">{positionLabel(player.position)}</p>
             </div>
           </div>
+          {stats && (
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+              <div className="rounded-lg bg-white/5 px-2 py-1">
+                <p className="text-xs text-slate-500">Apps</p>
+                <p className="font-semibold">{stats.appearances ?? '-'}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 px-2 py-1">
+                <p className="text-xs text-slate-500">Goals</p>
+                <p className="font-semibold">{stats.goalsTotal ?? '-'}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 px-2 py-1">
+                <p className="text-xs text-slate-500">Assists</p>
+                <p className="font-semibold">{stats.assists ?? '-'}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 px-2 py-1">
+                <p className="text-xs text-slate-500">Rating</p>
+                <p className="font-semibold">{stats.rating ?? '-'}</p>
+              </div>
+            </div>
+          )}
           <div className="mt-4 flex gap-2">
             <button className="btn-secondary" onClick={() => onReport(player)}>Report</button>
             <button className="btn-danger" onClick={() => onRemove(player.id)}>Remove</button>
@@ -1200,15 +1277,15 @@ function getErrorMessage(error: unknown) {
     const detail = response?.data?.detail ?? response?.data?.title ?? ''
 
     if (response?.status === 401) {
-      return 'Сесія закінчилась або токен невалідний. Увійди ще раз.'
+      return detail || 'Session expired. Please login again.'
     }
 
     if (detail.includes('Free plans do not have access to this season')) {
-      return 'Твій API-Football план не дає доступ до цього сезону. Обери сезон 2022-2024 або онови план.'
+      return 'Your API-Football plan does not include this season. Choose 2022–2024 or upgrade your plan.'
     }
 
     if (detail.startsWith('API-Football error')) {
-      return `Помилка зовнішнього API: ${detail.replace('API-Football error:', '').trim()}`
+      return `External API error: ${detail.replace('API-Football error:', '').trim()}`
     }
 
     return detail || 'Request failed.'
